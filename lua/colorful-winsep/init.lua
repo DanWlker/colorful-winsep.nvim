@@ -1,26 +1,39 @@
-local config = require("colorful-winsep.config")
+local default_config = require("colorful-winsep.config")
 local view = require("colorful-winsep.view")
+local utils = require("colorful-winsep.utils")
+local api = vim.api
 
-local M = {}
-M.enabled = true
+local M = {
+    enabled = true,
+    opts = {},
+}
 
-local function create_command()
-    vim.api.nvim_create_user_command("Winsep", function(ctx)
+function M.setup(user_opts)
+    M.opts = vim.tbl_deep_extend("force", default_config.opts, user_opts or {})
+
+    if type(M.opts.border) == "string" then
+        M.opts.border = utils.borders[M.opts.border] or utils.borders["single"]
+    end
+
+    api.nvim_create_user_command("Winsep", function(ctx)
         local subcommand = ctx.args
-        if subcommand == "enable" then
+        if subcommand == "enable" and not M.enabled then
             M.enabled = true
-            view.render()
-        elseif subcommand == "disable" then
+            vim.schedule(function()
+                view.render(M.opts)
+            end)
+        elseif subcommand == "disable" and M.enabled then
             M.enabled = false
             view.hide_all()
         elseif subcommand == "toggle" then
             if M.enabled then
-                M.enabled = false
                 view.hide_all()
             else
-                M.enabled = true
-                view.render()
+                vim.schedule(function()
+                    view.render(M.opts)
+                end)
             end
+            M.enabled = not M.enabled
         else
             vim.notify("Colorful-Winsep: no command " .. ctx.args)
         end
@@ -33,17 +46,9 @@ local function create_command()
             end, list)
         end,
     })
-end
 
-function M.setup(user_opts)
-    user_opts = user_opts or {}
-    config.merge_config(user_opts)
-
-    create_command()
-
-    local auto_group = vim.api.nvim_create_augroup("colorful_winsep", { clear = true })
-    vim.api.nvim_create_autocmd({ "WinEnter", "WinResized", "BufWinEnter" }, {
-        group = auto_group,
+    api.nvim_create_autocmd({ "WinEnter", "WinResized", "BufWinEnter" }, {
+        group = api.nvim_create_augroup("colorful_winsep", { clear = true }),
         callback = function(ctx)
             if not M.enabled then
                 return
@@ -52,23 +57,25 @@ function M.setup(user_opts)
             -- exclude floating windows
             local current_win = vim.fn.bufwinid(ctx.buf)
             if current_win ~= -1 then
-                local win_config = vim.api.nvim_win_get_config(current_win)
+                local win_config = api.nvim_win_get_config(current_win)
                 if win_config.relative ~= nil and win_config.relative ~= "" then
                     return
                 end
             end
 
-            if vim.tbl_contains(config.opts.excluded_ft, vim.bo[ctx.buf].ft) then
+            if vim.tbl_contains(M.opts.excluded_ft, vim.bo[ctx.buf].ft) then
                 view.hide_all()
                 return
             end
-            view.render()
+            vim.schedule(function()
+                view.render(M.opts)
+            end)
         end,
     })
 
     -- for some cases that close the separators windows(fail to trigger the WinLeave event), like `:only` command
     for _, sep in pairs(view.separators) do
-        vim.api.nvim_create_autocmd({ "BufHidden" }, {
+        api.nvim_create_autocmd({ "BufHidden" }, {
             buffer = sep.buffer,
             callback = function()
                 if not M.enabled then
@@ -78,12 +85,6 @@ function M.setup(user_opts)
             end,
         })
     end
-
-    config.opts.highlight()
-    vim.api.nvim_create_autocmd({ "ColorScheme" }, {
-        group = auto_group,
-        callback = config.opts.highlight,
-    })
 end
 
 return M

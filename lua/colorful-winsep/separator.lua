@@ -1,9 +1,15 @@
-local utils = require("colorful-winsep.utils")
-local config = require("colorful-winsep.config")
 local api = vim.api
 local uv = vim.uv
 
 ---@class Separator
+---@field start_symbol string
+---@field body_symbol string
+---@field end_symbol string
+---@field buffer integer
+---@field winid integer|nil
+---@field window { style: string, border: string, relative: string, zindex: integer, focusable: boolean, height: integer, width: integer, row: integer, col: integer }
+---@field extmarks table
+---@field _show boolean
 local Separator = {}
 
 --- create a new separator
@@ -51,7 +57,7 @@ function Separator:vertical_init(height)
         content[i] = self.body_symbol
     end
     content[height] = self.end_symbol
-    vim.api.nvim_buf_set_lines(self.buffer, 0, -1, false, content)
+    api.nvim_buf_set_lines(self.buffer, 0, -1, false, content)
 end
 
 --- horizontally initialize the separator window and buffer
@@ -60,7 +66,7 @@ function Separator:horizontal_init(width)
     self.window.height = 1
     self.window.width = width
     local content = { self.start_symbol .. string.rep(self.body_symbol, width - 2) .. self.end_symbol }
-    vim.api.nvim_buf_set_lines(self.buffer, 0, -1, false, content)
+    api.nvim_buf_set_lines(self.buffer, 0, -1, false, content)
 end
 
 --- reload the separator window config immediately
@@ -79,61 +85,20 @@ function Separator:move(row, col)
     self:reload_config()
 end
 
---- move the windows with shift animate
----@param row integer
----@param col integer
-function Separator:shift_move(row, col)
-    local current_row, current_col = unpack(api.nvim_win_get_position(self.winid))
-    if not self.timer:is_closing() then
-        self.timer:stop()
-        self.timer:close()
-    end
-    self.timer = vim.uv.new_timer()
-
-    local animate_config = config.opts.animate.shift
-    self.timer:start(
-        0,
-        animate_config.delay,
-        vim.schedule_wrap(function()
-            -- calculate exponential decay
-            local decay_factor = math.exp(-animate_config.smooth_speed * animate_config.delta_time)
-
-            -- perform linear interpolation
-            current_row = utils.lerp(row, current_row, decay_factor)
-            current_col = utils.lerp(col, current_col, decay_factor)
-
-            -- update line position
-            self:move(math.floor(current_row + 0.5), math.floor(current_col + 0.5)) -- round
-
-            -- check if position is close enough to the target
-            if math.abs(current_row - row) < 0.5 and math.abs(current_col - col) < 0.5 then
-                if not self.timer:is_closing() then
-                    self.timer:stop()
-                    self.timer:close()
-                end
-            end
-        end)
-    )
-end
-
 --- show the separator window
 function Separator:show()
-    if vim.api.nvim_buf_is_valid(self.buffer) then
+    if api.nvim_buf_is_valid(self.buffer) then
         local win = api.nvim_open_win(self.buffer, false, self.window)
         self.winid = win
         self._show = true
-        if config.opts.animate.enabled ~= "progressive" then
-            api.nvim_set_option_value("winhl", "Normal:ColorfulWinSep", { win = win })
-        else
-            api.nvim_set_option_value("winhl", "Normal:WinSeparator", { win = win })
-        end
+        api.nvim_set_option_value("winhl", "Normal:ColorfulWinSep", { win = win })
     end
 end
 
 --- hide the separator window
 function Separator:hide()
     if self.winid ~= nil and api.nvim_win_is_valid(self.winid) then
-        vim.api.nvim_win_hide(self.winid)
+        api.nvim_win_hide(self.winid)
         self.winid = nil
         self._show = false
     end
