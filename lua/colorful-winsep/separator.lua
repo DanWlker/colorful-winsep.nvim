@@ -6,7 +6,7 @@ local uv = vim.uv
 ---@field body_symbol string
 ---@field end_symbol string
 ---@field buffer integer
----@field winid integer|nil
+---@field winid integer?
 ---@field window { style: string, border: string, relative: string, zindex: integer, focusable: boolean, height: integer, width: integer, row: integer, col: integer }
 ---@field extmarks table
 ---@field _show boolean

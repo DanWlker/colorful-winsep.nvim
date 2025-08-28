@@ -1,4 +1,4 @@
-*colorful-winsep.txt*     For Neovim >= 0.11.3     Last change: 2025 August 20
+*colorful-winsep.txt*     For Neovim >= 0.11.3     Last change: 2025 August 27
 
 ==============================================================================
 Table of Contents                          *colorful-winsep-table-of-contents*
@@ -13,7 +13,6 @@ progressive .................................... |colorful-winsep-progressive|
 indicator ........................................ |colorful-winsep-indicator|
 Commands .......................................... |colorful-winsep-commands|
 Highlights ...................................... |colorful-winsep-highlights|
-TODO .................................................. |colorful-winsep-todo|
 License ............................................ |colorful-winsep-license|
 
 ==============================================================================
@@ -133,12 +132,6 @@ HIGHLIGHTS                                        *colorful-winsep-highlights*
 
 
 The highlight's name is `ColorfulWinSep`.
-
-------------------------------------------------------------------------------
-TODO                                                    *colorful-winsep-todo*
-
-
-- [ ] add marquee
 
 ------------------------------------------------------------------------------
 LICENSE                                              *colorful-winsep-license*

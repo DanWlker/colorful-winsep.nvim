@@ -94,10 +94,6 @@ The user command of the plugin is `Winsep`, and here comes the subcommands of it
 
 The highlight's name is `ColorfulWinSep`
 
-## TODO
-
-- [ ] add marquee
-
 ## License
 
 This plugin is released under the [MIT](./LICENSE) License.
