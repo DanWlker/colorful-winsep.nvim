@@ -47,8 +47,9 @@ function M.setup(user_opts)
         end,
     })
 
+    local auto_group = api.nvim_create_augroup("colorful_winsep", { clear = true })
     api.nvim_create_autocmd({ "WinEnter", "WinResized", "BufWinEnter" }, {
-        group = api.nvim_create_augroup("colorful_winsep", { clear = true }),
+        group = auto_group,
         callback = function(ctx)
             if not M.enabled then
                 return
@@ -86,6 +87,7 @@ function M.setup(user_opts)
     -- for some cases that close the separators windows(fail to trigger the WinLeave event), like `:only` command
     for _, sep in pairs(view.separators) do
         api.nvim_create_autocmd({ "BufHidden" }, {
+            group = auto_group,
             buffer = sep.buffer,
             callback = function()
                 if not M.enabled then
